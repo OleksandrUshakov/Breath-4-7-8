@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Глибоке дихання 4-7-8</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    #message {
+      font-size: 24px;
+      margin: 20px;
+    }
+    button {
+      font-size: 18px;
+      padding: 10px 20px;
+      margin: 10px;
+    }
+  </style>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ffffff">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          })
+          .catch(error => {
+            console.log('ServiceWorker registration failed: ', error);
+          });
+      });
+    }
+  </script>
+</head>
+<body>
+  <h1>Глибоке дихання 4-7-8</h1>
+  <div id="message">Натисніть "Почати", щоб почати дихальну вправу.</div>
+  <label for="session-time">Тривалість сесії (хвилини):</label>
+  <button id="decrease-time">-</button>
+  <span id="session-time">3</span>
+  <button id="increase-time">+</button>
+  <button id="start">Почати</button>
+  <button id="stop" disabled>Зупинити</button>
+
+  <script>
+    const messageElement = document.getElementById('message');
+    const startButton = document.getElementById('start');
+    const stopButton = document.getElementById('stop');
+    const sessionTimeElement = document.getElementById('session-time');
+    const decreaseTimeButton = document.getElementById('decrease-time');
+    const increaseTimeButton = document.getElementById('increase-time');
+    let timer;
+    let sessionTime = 3; // Default session time in minutes
+    let sessionTimer;
+    let sessionEndTimeout;
+
+    decreaseTimeButton.addEventListener('click', () => {
+      if (sessionTime > 1) {
+        sessionTime--;
+        sessionTimeElement.textContent = sessionTime;
+      }
+    });
+
+    increaseTimeButton.addEventListener('click', () => {
+      sessionTime++;
+      sessionTimeElement.textContent = sessionTime;
+    });
+
+    function startBreathing() {
+      let steps = [
+        { text: "Вдихайте... (4 секунди)", duration: 4000 },
+        { text: "Затримайте дихання... (7 секунд)", duration: 7000 },
+        { text: "Видихайте... (8 секунд)", duration: 8000 },
+      ];
+      let index = 0;
+      let totalDuration = sessionTime * 60 * 1000; // Convert minutes to milliseconds
+      let elapsedTime = 0;
+      const sessionDurationElement = document.createElement('div');
+      sessionDurationElement.id = 'session-duration';
+      sessionDurationElement.style.marginTop = '20px';
+      sessionDurationElement.style.fontSize = '18px';
+      document.body.appendChild(sessionDurationElement);
+
+      function updateSessionDuration() {
+        const remainingTime = Math.max(0, sessionTime * 60 - Math.floor(elapsedTime / 1000));
+        const minutes = Math.floor(remainingTime / 60);
+        const seconds = remainingTime % 60;
+        sessionDurationElement.textContent = `Залишилось часу: ${minutes} хв ${seconds} сек`;
+      }
+
+      function nextStep() {
+        if (elapsedTime >= totalDuration) {
+          stopBreathing();
+          return;
+        }
+        if (index >= steps.length) {
+          index = 0; // Reset index to loop the cycle
+        }
+        messageElement.textContent = steps[index].text;
+        timer = setTimeout(() => {
+          elapsedTime += steps[index].duration;
+          updateSessionDuration();
+          index++;
+          nextStep(); // Continue the cycle
+        }, steps[index].duration);
+      }
+
+      updateSessionDuration(); // Initialize the session duration display
+      nextStep();
+
+      sessionEndTimeout = setTimeout(() => {
+        stopBreathing();
+      }, totalDuration);
+
+      startButton.disabled = true;
+      stopButton.disabled = false;
+      decreaseTimeButton.disabled = true;
+      increaseTimeButton.disabled = true;
+    }
+
+    function stopBreathing() {
+      clearTimeout(timer);
+      clearTimeout(sessionEndTimeout);
+      messageElement.textContent = "Натисніть \"Почати\", щоб почати дихальну вправу.";
+      startButton.disabled = false;
+      stopButton.disabled = true;
+      decreaseTimeButton.disabled = false;
+      increaseTimeButton.disabled = false;
+    }
+
+    startButton.addEventListener('click', startBreathing);
+    stopButton.addEventListener('click', stopBreathing);
+  </script>
+</body>
+</html>
